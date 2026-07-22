@@ -1,8 +1,45 @@
 # Fried Fish — Thames Climate Risk Dashboard
 
-A real-time early-warning system for thermal stress events threatening fish in the River Thames. Built at the Connected Places Catapult / Met Office / Snowflake hackathon — *"Improving the Use of Weather and Climate Data for Smarter Decision Making"* (22 July 2026).
+A real-time early-warning system for thermal stress events threatening fish in the River Thames.
 
 **Live app:** [connected-hackathon.streamlit.app](https://connected-hackathon.streamlit.app)
+
+## The Hackathon
+
+Built in a single day at **"Improving the Use of Weather and Climate Data for Smarter Decision Making"** (22 July 2026, London) — a collaborative hackathon hosted by:
+
+- **Connected Places Catapult** — venue and innovation support
+- **Met Office** — weather and climate data (15 years of hourly pseudo-observations)
+- **Snowflake** — cloud data platform and AI tooling
+- **Government Digital Service (GDS)** — digital strategy and public sector context
+
+Delivered in partnership with UKRI / Innovate UK.
+
+### Challenge
+
+> *"What extra value appears when AI can search, summarise, join and explain weather data in the context of real operational choices?"*
+
+We chose the **Resilience & Emergency Response** theme and framed our challenge as:
+
+> **How might we** join weather and climate data with river monitoring and fish ecology **so that** Thames fisheries officers **can** anticipate thermal stress events before they cause fish mortality?
+
+### Approach
+
+Following the hackathon's human-centred design methodology:
+1. Defined a user persona (Dr. Nicholas Sturgeon, Thames Fisheries Officer)
+2. Mapped current vs. future user journey (reactive → predictive)
+3. Joined 4 fragmented datasets in Snowflake using geospatial queries
+4. Built an air-to-water temperature forecast model
+5. Simulated fish population impacts under climate scenarios (+3°C, +5°C)
+6. Delivered an interactive Streamlit dashboard as the prototype
+
+### Judging Criteria
+
+| Criterion | Weight | What it assesses |
+|---|---|---|
+| Technology & Innovation | 50% | Originality, improvement over existing services, potential to increase data use |
+| Impact & Value | 30% | How well the challenge is addressed, benefit to users/society |
+| Feasibility | 20% | Practicality of implementation into existing systems |
 
 ## What it does
 
