@@ -1,0 +1,85 @@
+-- Snowflake DDL for the wxdecide EA Hydrology data model
+-- Target: MET_SCRATCH.THAMES
+-- Run with: USE DATABASE MET_SCRATCH; USE SCHEMA THAMES;
+
+USE DATABASE MET_SCRATCH;
+USE SCHEMA THAMES;
+
+-- EA hydrology monitoring stations
+CREATE TABLE IF NOT EXISTS STATIONS (
+    ID              VARCHAR     NOT NULL PRIMARY KEY,
+    LABEL           VARCHAR,
+    RIVER_NAME      VARCHAR,
+    LAT             FLOAT,
+    LONG            FLOAT,
+    NRFA_STATION_ID VARCHAR,
+    LOCATION        GEOGRAPHY  -- derived from lat/long at load time
+);
+
+-- Normalised station type URIs (one-to-many)
+CREATE TABLE IF NOT EXISTS STATION_TYPES (
+    STATION_ID  VARCHAR NOT NULL,
+    TYPE_URI    VARCHAR NOT NULL,
+    PRIMARY KEY (STATION_ID, TYPE_URI),
+    FOREIGN KEY (STATION_ID) REFERENCES STATIONS(ID)
+);
+
+-- Normalised station status URIs (one-to-many)
+CREATE TABLE IF NOT EXISTS STATION_STATUSES (
+    STATION_ID  VARCHAR NOT NULL,
+    STATUS_URI  VARCHAR NOT NULL,
+    PRIMARY KEY (STATION_ID, STATUS_URI),
+    FOREIGN KEY (STATION_ID) REFERENCES STATIONS(ID)
+);
+
+-- Timeseries dimension: one row per measure a station provides
+CREATE TABLE IF NOT EXISTS MEASURES (
+    ID              VARCHAR NOT NULL PRIMARY KEY,
+    LABEL           VARCHAR,
+    PARAMETER       VARCHAR NOT NULL,
+    PARAMETER_NAME  VARCHAR,
+    PERIOD          INTEGER NOT NULL,
+    PERIOD_NAME     VARCHAR,
+    VALUE_TYPE      VARCHAR,
+    UNIT_NAME       VARCHAR,
+    STATION_ID      VARCHAR,
+    FOREIGN KEY (STATION_ID) REFERENCES STATIONS(ID)
+);
+
+-- Denormalised readings: one row per (measure, timestamp)
+CREATE TABLE IF NOT EXISTS READINGS (
+    MEASURE_ID  VARCHAR     NOT NULL,
+    DATE_TIME   TIMESTAMP   NOT NULL,
+    VALUE       FLOAT,
+    QUALITY     VARCHAR,
+    STATION_ID  VARCHAR,
+    PARAMETER   VARCHAR     NOT NULL,
+    PERIOD      INTEGER     NOT NULL,
+    PERIOD_NAME VARCHAR,
+    VALUE_TYPE  VARCHAR,
+    UNIT_NAME   VARCHAR,
+    PRIMARY KEY (MEASURE_ID, DATE_TIME),
+    FOREIGN KEY (STATION_ID) REFERENCES STATIONS(ID)
+)
+CLUSTER BY (STATION_ID, DATE_TIME);
+
+-- OS Open Rivers GB watercourse network (~193k links)
+CREATE TABLE IF NOT EXISTS RIVER_LINKS (
+    ID                              VARCHAR NOT NULL PRIMARY KEY,
+    WATERCOURSE_NAME                VARCHAR,
+    WATERCOURSE_NAME_ALTERNATIVE    VARCHAR,
+    FORM                            VARCHAR,
+    FLOW_DIRECTION                  VARCHAR,
+    FICTITIOUS                      VARCHAR,
+    LENGTH                          FLOAT,
+    START_NODE                      VARCHAR,
+    END_NODE                        VARCHAR,
+    GEOMETRY                        GEOGRAPHY
+);
+
+-- CAMELS-GB upstream catchment boundary polygons (671 rows)
+CREATE TABLE IF NOT EXISTS CATCHMENT_BOUNDARIES (
+    NRFA_STATION_ID VARCHAR NOT NULL PRIMARY KEY,
+    AREA_KM2        FLOAT   NOT NULL,
+    GEOMETRY        GEOGRAPHY
+);

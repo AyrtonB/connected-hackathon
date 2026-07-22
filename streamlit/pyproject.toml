@@ -1,0 +1,11 @@
+[project]
+name = "fried-fish-dashboard"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "streamlit[snowflake]>=1.50",
+    "folium>=0.17",
+    "streamlit-folium>=0.22",
+    "plotly>=5.0",
+    "pandas>=2.0",
+]

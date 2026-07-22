@@ -1,0 +1,42 @@
+[project]
+name = "wxdecide"
+version = "0.1.0"
+description = "Connected Places Catapult / Met Office / Snowflake hackathon project"
+readme = "README.md"
+authors = [
+    { name = "Ayrton Bourn", email = "ayrtonbourn@outlook.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "alembic>=1.18.5",
+    "geoalchemy2>=0.20.0",
+    "geopandas>=1.1.4",
+    "httpx>=0.28.1",
+    "pandas>=3.0.3",
+    "psycopg[binary]>=3.3.4",
+    "pyarrow>=25.0.0",
+    "pydantic>=2.13.4",
+    "shapely>=2.1.2",
+    "sqlmodel>=0.0.39",
+]
+
+[dependency-groups]
+dev = [
+    "ipykernel>=7.3.0",
+    "jupyter>=1.1.1",
+    "matplotlib>=3.11.1",
+    "networkx>=3.6.1",
+    "pandas>=3.0.3",
+    "pytest>=8.0",
+    "ruff>=0.6",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+line-length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
