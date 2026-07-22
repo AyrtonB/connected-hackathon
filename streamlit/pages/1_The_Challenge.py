@@ -1,4 +1,7 @@
+from pathlib import Path
 import streamlit as st
+
+_APP_DIR = Path(__file__).resolve().parent.parent
 
 st.title("The Challenge: Saving Thames Fish — A Matter of Time and Plaice")
 
@@ -24,7 +27,7 @@ st.subheader("User Persona")
 with st.container(border=True):
     col_img, col_info = st.columns([1, 4])
     with col_img:
-        st.image("images/michael-fish.webp", width=140)
+        st.image(str(_APP_DIR / "images" / "michael-fish.webp"), width=140)
     with col_info:
         st.markdown("**Dr. Nicholas Sturgeon** — *Thames Fisheries & Biodiversity Officer, Environment Agency*")
         st.markdown(

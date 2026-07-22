@@ -1,4 +1,7 @@
+from pathlib import Path
 import streamlit as st
+
+_APP_DIR = Path(__file__).resolve().parent
 
 st.set_page_config(
     page_title="Fried Fish — Thames Climate Risk",
@@ -6,7 +9,7 @@ st.set_page_config(
     layout="wide",
 )
 
-st.logo("images/fried-fish.svg")
+st.logo(str(_APP_DIR / "images" / "fried-fish.svg"))
 
 pg = st.navigation([
     st.Page("pages/1_The_Challenge.py", title="The Challenge", icon="🎯"),
