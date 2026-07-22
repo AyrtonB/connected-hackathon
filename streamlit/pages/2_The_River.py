@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
-import pydeck as pdk
+import folium
+from streamlit_folium import st_folium
 from data import (
     get_stations, get_river_geojson, get_catchment_geojson,
     get_station_readings, get_nearest_met_site, get_site_climate,
@@ -22,7 +23,16 @@ def get_station_parameters():
     )
 
 
+@st.cache_data(ttl=600)
+def get_met_sites():
+    conn = st.connection("snowflake")
+    return conn.query(
+        "SELECT SITE_ID, SITE_NAME, LATITUDE, LONGITUDE FROM MET_SCRATCH.THAMES.PSEUDO_SITES_GEO"
+    )
+
+
 params_df = get_station_parameters()
+met_sites = get_met_sites()
 
 # Default to Cadogan Pier
 if "selected_station_label" not in st.session_state:
@@ -41,68 +51,92 @@ selected_station = stations[stations["LABEL"] == station_label].iloc[0]
 station_id = str(selected_station["ID"])
 nrfa_id = selected_station.get("NRFA_STATION_ID")
 
-# Build pydeck layers
-layers = []
+# Build folium map
+m = folium.Map(location=[51.5, -0.8], zoom_start=9, tiles="CartoDB positron")
 
-# River GeoJSON layer
-layers.append(pdk.Layer(
-    "GeoJsonLayer",
-    data=river_geojson,
-    get_line_color=[0, 100, 200],
-    get_line_width=30,
-    pickable=False,
-))
+# Add river GeoJSON
+folium.GeoJson(
+    river_geojson,
+    style_function=lambda _: {"color": "blue", "weight": 2, "opacity": 0.7},
+    name="River Thames",
+).add_to(m)
 
-# Catchment polygon
-catchment_data = None
+# Add catchment if available (direct NRFA match or tidal station mapping)
+catchment_shown = False
 if pd.notna(nrfa_id) and str(nrfa_id).strip():
-    catchment_data = get_catchment_geojson(str(nrfa_id))
-if not catchment_data:
-    catchment_data = get_tidal_station_catchment(station_id)
+    catchment = get_catchment_geojson(str(nrfa_id))
+    if catchment:
+        folium.GeoJson(
+            catchment,
+            style_function=lambda _: {
+                "color": "green",
+                "weight": 2,
+                "fillColor": "green",
+                "fillOpacity": 0.15,
+            },
+            name="Catchment",
+        ).add_to(m)
+        catchment_shown = True
 
-if catchment_data:
-    layers.append(pdk.Layer(
-        "GeoJsonLayer",
-        data=catchment_data,
-        get_fill_color=[0, 180, 0, 30],
-        get_line_color=[0, 150, 0],
-        get_line_width=50,
-        pickable=False,
-    ))
+if not catchment_shown:
+    tidal_catchment = get_tidal_station_catchment(station_id)
+    if tidal_catchment:
+        folium.GeoJson(
+            tidal_catchment,
+            style_function=lambda _: {
+                "color": "green",
+                "weight": 2,
+                "fillColor": "green",
+                "fillOpacity": 0.12,
+            },
+            name="Upstream Catchment",
+        ).add_to(m)
+        catchment_shown = True
 
-# Station scatter layer
-station_data = []
+# Find nearest Met site for the selected station
+met_site_df = get_nearest_met_site(station_id)
+selected_met_site_id = int(met_site_df.iloc[0]["SITE_ID"]) if not met_site_df.empty else None
+
+# Add Met Office sites (small green/orange markers)
+for _, site in met_sites.iterrows():
+    is_nearest = site["SITE_ID"] == selected_met_site_id
+    folium.CircleMarker(
+        location=[site["LATITUDE"], site["LONGITUDE"]],
+        radius=7 if is_nearest else 4,
+        color="orange" if is_nearest else "green",
+        fill=True,
+        fill_color="orange" if is_nearest else "green",
+        fill_opacity=0.9 if is_nearest else 0.3,
+        tooltip=f"Met: {site['SITE_NAME']}" + (" (nearest)" if is_nearest else ""),
+    ).add_to(m)
+
+# Add EA station markers with tooltip
 for _, stn in stations.iterrows():
     is_selected = stn["LABEL"] == station_label
-    station_data.append({
-        "position": [float(stn["LONG"]), float(stn["LAT"])],
-        "label": stn["LABEL"],
-        "color": [220, 50, 50, 220] if is_selected else [50, 100, 200, 160],
-        "radius": 350 if is_selected else 180,
-    })
+    folium.CircleMarker(
+        location=[stn["LAT"], stn["LONG"]],
+        radius=8 if is_selected else 6,
+        color="red" if is_selected else "blue",
+        fill=True,
+        fill_color="red" if is_selected else "blue",
+        fill_opacity=0.8 if is_selected else 0.5,
+        tooltip=stn["LABEL"],
+    ).add_to(m)
 
-layers.append(pdk.Layer(
-    "ScatterplotLayer",
-    data=station_data,
-    get_position="position",
-    get_fill_color="color",
-    get_radius="radius",
-    pickable=True,
-))
+map_data = st_folium(m, width=None, height=500, returned_objects=["last_object_clicked"])
 
-# Render map
-view_state = pdk.ViewState(
-    latitude=float(selected_station["LAT"]),
-    longitude=float(selected_station["LONG"]),
-    zoom=9,
-    pitch=0,
-)
-
-st.pydeck_chart(pdk.Deck(
-    layers=layers,
-    initial_view_state=view_state,
-    map_style="mapbox://styles/mapbox/light-v10",
-))
+# Handle map click — find nearest station
+if map_data and map_data.get("last_object_clicked"):
+    click = map_data["last_object_clicked"]
+    click_lat = click.get("lat")
+    click_lng = click.get("lng")
+    if click_lat and click_lng:
+        distances = ((stations["LAT"] - click_lat) ** 2 + (stations["LONG"] - click_lng) ** 2)
+        nearest_idx = distances.idxmin()
+        clicked_label = stations.loc[nearest_idx, "LABEL"]
+        if clicked_label != st.session_state.selected_station_label:
+            st.session_state.selected_station_label = clicked_label
+            st.rerun()
 
 # Station detail panel
 st.divider()
@@ -181,11 +215,9 @@ if catchment_nrfa:
 
 if not use_catchment:
     st.subheader("Local Climate — Nearest Met Office Site")
-    met_site_df = get_nearest_met_site(station_id)
     if not met_site_df.empty:
         site_name = met_site_df.iloc[0]["SITE_NAME"]
         dist_m = met_site_df.iloc[0]["DIST_M"]
-        selected_met_site_id = int(met_site_df.iloc[0]["SITE_ID"])
         st.caption(f"Met Office site: {site_name} ({dist_m:.0f}m from station)")
 
         climate_df = get_site_climate(selected_met_site_id, days=90)
