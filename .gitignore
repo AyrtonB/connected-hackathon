@@ -8,3 +8,15 @@ __pycache__/
 dist/
 build/
 .DS_Store
+
+# Large data files (already in Snowflake)
+scripts/exports/
+data/*.gz
+data/*.xlsx
+
+# Streamlit secrets (use Streamlit Cloud secrets UI)
+.streamlit/secrets.toml
+streamlit/.streamlit/
+
+# Internal tooling
+.cortex/plans/
