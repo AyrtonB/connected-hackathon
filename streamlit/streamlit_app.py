@@ -6,14 +6,11 @@ st.set_page_config(
     layout="wide",
 )
 
-PAGES = {
-    "The Challenge": "pages/1_The_Challenge.py",
-    "The River": "pages/2_The_River.py",
-    "Climate Signal": "pages/3_Climate_Signal.py",
-    "Fish at Risk": "pages/4_Fish_at_Risk.py",
-}
+pg = st.navigation([
+    st.Page("pages/1_The_Challenge.py", title="The Challenge", icon="🎯"),
+    st.Page("pages/2_The_River.py", title="The River", icon="🗺️"),
+    st.Page("pages/3_Climate_Signal.py", title="Climate Signal", icon="🌡️"),
+    st.Page("pages/4_Fish_at_Risk.py", title="Fish at Risk", icon="🐟"),
+])
 
-page = st.sidebar.radio("Navigate", list(PAGES.keys()), index=1)
-
-with open(PAGES[page]) as f:
-    exec(f.read())
+pg.run()

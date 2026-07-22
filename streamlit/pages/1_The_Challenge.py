@@ -21,7 +21,7 @@ st.divider()
 # ─── User Persona ──────────────────────────────────────────────────────────────
 st.subheader("User Persona")
 
-with st.container():
+with st.container(border=True):
     col_img, col_info = st.columns([1, 4])
     with col_img:
         st.image("images/michael-fish.webp", width=140)
@@ -66,7 +66,7 @@ st.subheader("Stakeholders")
 
 col_high, col_med, col_low = st.columns(3)
 with col_high:
-    with st.container():
+    with st.container(border=True):
         st.markdown("**Direct Users**")
         st.markdown(
             "- EA Fisheries Officers\n"
@@ -74,7 +74,7 @@ with col_high:
             "- Angling Trust / fisheries managers"
         )
 with col_med:
-    with st.container():
+    with st.container(border=True):
         st.markdown("**Indirect**")
         st.markdown(
             "- Water companies (abstraction impact)\n"
@@ -82,7 +82,7 @@ with col_med:
             "- Conservation NGOs (Rivers Trust)"
         )
 with col_low:
-    with st.container():
+    with st.container(border=True):
         st.markdown("**Contextual**")
         st.markdown(
             "- Recreational anglers\n"
